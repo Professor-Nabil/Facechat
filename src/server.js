@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path"; // ◄── Add this native Node utility import
 import authRouter from "./modules/auth/auth.route.js";
 import postRouter from "./modules/posts/posts.route.js";
 import friendsRouter from "./modules/friends/friends.route.js"; // ◄── Add this import
@@ -15,6 +16,7 @@ global.db = global.db || {
 };
 
 app.use(express.json());
+app.use(express.static("public")); // ◄── Expose your public assets directory to the web!
 
 // ⚡ Mount your modular api routes
 app.use("/api/auth", authRouter);
