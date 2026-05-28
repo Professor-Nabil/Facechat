@@ -246,6 +246,158 @@
           templates go right here.
         </div>
       </section>
+
+      <section
+        x-show="currentTab === 'friends'"
+        x-init="fetchFriendsTab()"
+        class="space-y-6"
+      >
+        <div
+          class="flex items-center justify-between border-b border-slate-800 pb-4"
+        >
+          <div>
+            <h1 class="text-xl font-bold tracking-tight">Social Network Hub</h1>
+            <p class="text-xs text-slate-400">
+              Discover profiles and manage your connections seamlessly with
+              one-click hooks.
+            </p>
+          </div>
+          <button
+            @click="fetchFriendsTab()"
+            class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 transition font-mono"
+          >
+            🔄 Sync Graph
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-6">
+            <div
+              class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3"
+            >
+              <h3
+                class="text-xs font-mono text-amber-400 uppercase tracking-wider font-semibold"
+              >
+                📥 Pending Invites (<span x-text="pendingRequests.length"></span
+                >)
+              </h3>
+              <div class="space-y-2">
+                <template x-for="req in pendingRequests" :key="req.requestId">
+                  <div
+                    class="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-amber-500/20"
+                  >
+                    <div>
+                      <h4
+                        class="text-sm font-semibold text-amber-200"
+                        x-text="req.name"
+                      ></h4>
+                      <p
+                        class="text-[10px] font-mono text-slate-500"
+                        x-text="req.email"
+                      ></p>
+                    </div>
+                    <button
+                      @click="acceptRequest(req.requestId)"
+                      class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-3 py-1 rounded-md transition shadow-sm"
+                    >
+                      Accept
+                    </button>
+                  </div>
+                </template>
+
+                <div
+                  x-show="pendingRequests.length === 0"
+                  class="text-center py-4 text-xs text-slate-600 font-mono"
+                >
+                  No pending inbound connection requests.
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3"
+            >
+              <h3
+                class="text-xs font-mono text-blue-400 uppercase tracking-wider font-semibold"
+              >
+                👥 Confirmed Friends (<span x-text="friends.length"></span>)
+              </h3>
+              <div class="space-y-2">
+                <template x-for="friend in friends" :key="friend.id">
+                  <div
+                    class="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-slate-800/50"
+                  >
+                    <div>
+                      <h4
+                        class="text-sm font-semibold text-slate-200"
+                        x-text="friend.name"
+                      ></h4>
+                      <p
+                        class="text-[10px] font-mono text-slate-500"
+                        x-text="friend.email"
+                      ></p>
+                    </div>
+                    <span
+                      class="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded"
+                      >Connected</span
+                    >
+                  </div>
+                </template>
+                <div
+                  x-show="friends.length === 0"
+                  class="text-center py-6 text-xs text-slate-600 font-mono"
+                >
+                  Your social graph has no active link edges. Connect with users
+                  on the right!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-3"
+          >
+            <h3
+              class="text-xs font-mono text-indigo-400 uppercase tracking-wider font-semibold"
+            >
+              ✨ Discover People
+            </h3>
+
+            <div class="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+              <template x-for="item in allUsers" :key="item.id">
+                <div
+                  class="flex items-center justify-between p-3 bg-slate-900 rounded-lg border border-slate-800/60 hover:border-slate-700 transition"
+                >
+                  <div>
+                    <h4
+                      class="text-sm font-semibold text-slate-200"
+                      x-text="item.name"
+                    ></h4>
+                    <p
+                      class="text-[10px] font-mono text-slate-500"
+                      x-text="item.email"
+                    ></p>
+                  </div>
+                  <button
+                    @click="sendRequest(item.id)"
+                    class="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-medium px-3 py-1 rounded-md transition shadow-sm"
+                  >
+                    Add Friend
+                  </button>
+                </div>
+              </template>
+
+              <div
+                x-show="allUsers.length === 0"
+                class="text-center py-8 text-xs text-slate-600 font-mono"
+              >
+                No other registered human accounts found on this RAM instance
+                cluster yet.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   </body>
 </html>

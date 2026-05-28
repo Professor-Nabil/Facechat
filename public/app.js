@@ -19,7 +19,9 @@ document.addEventListener("alpine:init", () => {
 
     // 💾 Hydrated Data Arrays from Backend RAM
     feed: [],
-    friends: [],
+    friends: [], // Active accepted friends list
+    allUsers: [], // Discovery: Everyone on the platform
+    pendingRequests: [], // Incoming requests waiting for approval
 
     // ⚙️ Helper to automatically append our custom Bearer Token passport
     get headers() {
@@ -96,7 +98,6 @@ document.addEventListener("alpine:init", () => {
         const res = await fetch("/api/posts", { headers: this.headers });
         const json = await res.json();
         if (res.ok) {
-          // Map over each post and fetch its nested comment sub-resource matrix concurrently
           const postsWithComments = await Promise.all(
             json.data.feed.map(async (post) => {
               const commentsRes = await fetch(
@@ -127,7 +128,7 @@ document.addEventListener("alpine:init", () => {
         });
         if (res.ok) {
           this.newPostContent = "";
-          await this.fetchFeed(); // Instantly refresh timeline cache matrix
+          await this.fetchFeed();
         }
       } catch (err) {
         console.error("Post creation error:", err);
@@ -147,11 +148,75 @@ document.addEventListener("alpine:init", () => {
         });
 
         if (res.ok) {
-          this.newCommentContent[postId] = ""; // Clear specific post text key template input
-          await this.fetchFeed(); // Refresh hydrated data structure view layers
+          this.newCommentContent[postId] = "";
+          await this.fetchFeed();
         }
       } catch (err) {
-        console.error("Comment dispatch execution exception:", err);
+        console.error("Comment dispatch exception:", err);
+      }
+    },
+
+    // 👥 UPGRADED SOCIAL GRAPH ACTIONS (No more manual UUID pasting!)
+    // 👥 UPGRADED SOCIAL GRAPH ACTIONS
+    async fetchFriendsTab() {
+      try {
+        // 1. Fetch confirmed active friends
+        const friendsRes = await fetch("/api/friends", {
+          headers: this.headers,
+        });
+        const friendsJson = await friendsRes.json();
+        this.friends = friendsRes.ok ? friendsJson.data.friends : [];
+
+        // 2. Fetch platform users for discovery list
+        const usersRes = await fetch("/api/auth/users", {
+          headers: this.headers,
+        });
+        const usersJson = await usersRes.json();
+        this.allUsers = usersRes.ok ? usersJson.data.users : [];
+
+        // 3. 🚀 FIX: Fetch actual pending requests from our new live backend API endpoint
+        const pendingRes = await fetch("/api/friends/pending", {
+          headers: this.headers,
+        });
+        const pendingJson = await pendingRes.json();
+        this.pendingRequests = pendingRes.ok ? pendingJson.data.pending : [];
+      } catch (err) {
+        console.error("Failed syncing social workspace metrics:", err);
+      }
+    },
+
+    async sendRequest(targetUserId) {
+      try {
+        const res = await fetch("/api/friends/request", {
+          method: "POST",
+          headers: this.headers,
+          body: JSON.stringify({ targetUserId }),
+        });
+        const json = await res.json();
+
+        if (!res.ok) {
+          alert(`⚠️ Notice: ${json.message}`);
+          return;
+        }
+
+        await this.fetchFriendsTab(); // Instantly refresh UI state
+      } catch (err) {
+        console.error("Friend request execution exception:", err);
+      }
+    },
+
+    async acceptRequest(requestId) {
+      try {
+        const res = await fetch("/api/friends/accept", {
+          method: "PUT",
+          headers: this.headers,
+          body: JSON.stringify({ requestId }),
+        });
+        if (res.ok) {
+          await this.fetchFriendsTab(); // Instantly update active graph layout on screen
+        }
+      } catch (err) {
+        console.error("Acceptance toggle failure:", err);
       }
     },
   }));
