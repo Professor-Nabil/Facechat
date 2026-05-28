@@ -90,13 +90,27 @@ document.addEventListener("alpine:init", () => {
       this.currentTab = "auth";
     },
 
-    // 📝 POSTS & TIMELINE TIMELINE ACTIONS
+    // 📝 POSTS & TIMELINE ACTIONS
     async fetchFeed() {
       try {
         const res = await fetch("/api/posts", { headers: this.headers });
         const json = await res.json();
         if (res.ok) {
-          this.feed = json.data.feed;
+          // Map over each post and fetch its nested comment sub-resource matrix concurrently
+          const postsWithComments = await Promise.all(
+            json.data.feed.map(async (post) => {
+              const commentsRes = await fetch(
+                `/api/posts/${post.id}/comments`,
+                { headers: this.headers },
+              );
+              const commentsJson = await commentsRes.json();
+              return {
+                ...post,
+                comments: commentsRes.ok ? commentsJson.data.comments : [],
+              };
+            }),
+          );
+          this.feed = postsWithComments;
         }
       } catch (err) {
         console.error("Failed fetching timeline:", err);
@@ -117,6 +131,27 @@ document.addEventListener("alpine:init", () => {
         }
       } catch (err) {
         console.error("Post creation error:", err);
+      }
+    },
+
+    // 💬 SUB-RESOURCE COMMENTS ACTIONS
+    async addComment(postId) {
+      const content = this.newCommentContent[postId];
+      if (!content || !content.trim()) return;
+
+      try {
+        const res = await fetch(`/api/posts/${postId}/comments`, {
+          method: "POST",
+          headers: this.headers,
+          body: JSON.stringify({ content: content.trim() }),
+        });
+
+        if (res.ok) {
+          this.newCommentContent[postId] = ""; // Clear specific post text key template input
+          await this.fetchFeed(); // Refresh hydrated data structure view layers
+        }
+      } catch (err) {
+        console.error("Comment dispatch execution exception:", err);
       }
     },
   }));
