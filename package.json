@@ -1,0 +1,24 @@
+{
+  "name": "facechat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch ./src/server.js",
+    "live": "live-server ./public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github-tester:Professor-Nabil/Facechat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
