@@ -3,78 +3,98 @@ console.json = (obj) => console.log(JSON.stringify(obj, null, 2));
 document.addEventListener("alpine:init", () => {
   Alpine.data("alpineInit", () => ({
     user: {},
+    users: [],
+    chat: [],
+    newMessage: "",
+    activeTab: "chat", // 📱 Mobile Focus: Track which panel is active on screen
 
     async init() {
       if (readAccessToken()) {
-        this.getUser();
-        this.getAllUsers();
-        this.getAllGlobalChat();
-        this.addOneGlobalChat();
+        await this.syncSessionContext();
       } else {
         const result = await login();
         this.user = result.data.user;
         saveAccessToken(result.data.token);
-        this.getUser();
+        await this.syncSessionContext();
       }
+
+      setInterval(() => {
+        if (readAccessToken()) {
+          this.getAllUsers();
+          this.getAllGlobalChat();
+        }
+      }, 2000);
+    },
+
+    async syncSessionContext() {
+      const res = await getOneUser();
+      if (res && res.data) {
+        this.user = res.data.user;
+      }
+      this.getAllUsers();
+      this.getAllGlobalChat();
     },
 
     async getUser() {
       const result = await getOneUser();
-
       console.json(result);
     },
 
     async getAllUsers() {
       const result = await getAllUsers();
-      console.json(result);
+      if (result && result.data) {
+        this.users = result.data;
+      }
     },
 
     async getAllGlobalChat() {
       const result = await getAllGlobalChat();
-      console.json(result);
+      if (result && result.data) {
+        // 📏 Check if there are actually new messages before updating
+        const hasNewMessages = result.data.length > this.chat.length;
+
+        this.chat = result.data;
+
+        // ⬇️ Auto-scroll to the bottom if a new transmission is detected
+        if (hasNewMessages) {
+          setTimeout(() => {
+            const view = document.getElementById("chat-viewport");
+            if (view) {
+              view.scrollTo({
+                top: view.scrollHeight,
+                behavior: "smooth", // Gives it a clean animation on phones
+              });
+            }
+          }, 50);
+        }
+      }
     },
 
-    async addOneGlobalChat() {
-      const result = await addOneGlobalChat(Math.random());
-      console.json(result);
+    async sendMessage() {
+      if (!this.newMessage.trim()) return;
+
+      const payloadText = this.newMessage.trim();
+      this.newMessage = "";
+
+      const result = await addOneGlobalChat(payloadText);
+      if (result && result.message.includes("Success")) {
+        await this.getAllGlobalChat();
+        setTimeout(() => {
+          const view = document.getElementById("chat-viewport");
+          if (view) view.scrollTop = view.scrollHeight;
+        }, 50);
+      }
+    },
+
+    logout() {
+      if (
+        confirm(
+          "⚠️ Warning: Activating self-destruct sequence will delete this session key forever! Continue?",
+        )
+      ) {
+        deleteAccessToken();
+        window.location.reload();
+      }
     },
   }));
 });
-
-/*
- * - Setup
- * x-data
- *
- * - Inputs
- * x-model
- *
- * - Outputs
- * x-text
- *
- * - Loops
- * <template x-for="elm in array" :key="array.id">
- *  // ... Should be One Element
- * </template>
- *
- * - If
- * <template x-if="a > b">
- *   // ...
- * </template>
- *
- * - Events
- *   - Click Events
- *    <button x-on:click="console.log('Hi')">Click me</button>
- *    <button @click="console.log('Hi')">Click me</button>
- *
- *   - Click Event submit form
- *    <form @submit.prevent="console.log('Hi')">
- *      <button type="submit">Submit</button>
- *    </form>
- *
- * - Function
- *  <button @click="show = !show">Show</button>
- *  <div x-show="show">
- *    // ...
- *  </div>
- *
- */
