@@ -1,16 +1,42 @@
+console.json = (obj) => console.log(JSON.stringify(obj, null, 2));
+
 document.addEventListener("alpine:init", () => {
   Alpine.data("alpineInit", () => ({
-    data: {
-      userName: "",
-      password: "",
+    user: {},
+
+    async init() {
+      if (readAccessToken()) {
+        this.getUser();
+        this.getAllUsers();
+        this.getAllGlobalChat();
+        this.addOneGlobalChat();
+      } else {
+        const result = await login();
+        this.user = result.data.user;
+        saveAccessToken(result.data.token);
+        this.getUser();
+      }
     },
-    init() {},
-    async signup() {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-      });
-      console.log(this.data.userName);
-      console.log(this.data.password);
+
+    async getUser() {
+      const result = await getOneUser();
+
+      console.json(result);
+    },
+
+    async getAllUsers() {
+      const result = await getAllUsers();
+      console.json(result);
+    },
+
+    async getAllGlobalChat() {
+      const result = await getAllGlobalChat();
+      console.json(result);
+    },
+
+    async addOneGlobalChat() {
+      const result = await addOneGlobalChat(Math.random());
+      console.json(result);
     },
   }));
 });
